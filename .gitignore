@@ -1,0 +1,28 @@
+# Dependencias
+node_modules/
+cms/node_modules/
+frontend/node_modules/
+
+# Strapi
+cms/.tmp/
+cms/dist/
+cms/.strapi/
+cms/.env
+cms/build/
+
+# Vite / React
+frontend/dist/
+frontend/.env
+
+# Dependencias en cualquier subcarpeta
+**/node_modules/
+node_modules/
+
+# Archivos de build y temporales
+**/.tmp/
+**/dist/
+**/.strapi/
+**/.env
+**/.env.*
+**/build/
+*.tsbuildinfo
