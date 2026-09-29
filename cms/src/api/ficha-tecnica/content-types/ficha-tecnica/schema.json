@@ -1,0 +1,36 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ficha_tecnicas",
+  "info": {
+    "singularName": "ficha-tecnica",
+    "pluralName": "ficha-tecnicas",
+    "displayName": "Ficha-Tecnica"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "diagnostico": {
+      "type": "string"
+    },
+    "historial_quimico": {
+      "type": "text"
+    },
+    "tipo_cuero_cabelludo": {
+      "type": "string"
+    },
+    "observaciones": {
+      "type": "text"
+    },
+    "fecha_visita": {
+      "type": "date"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "ficha_tecnicas"
+    }
+  }
+}

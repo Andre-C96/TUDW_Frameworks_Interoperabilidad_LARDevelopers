@@ -10,8 +10,19 @@ interface Servicio {
   tipo: string;
 }
 
+interface FichaTecnica {
+  id: number;
+  documentId?: string;
+  diagnostico: string;
+  historial_quimico: string;
+  tipo_cuero_cabelludo: string;
+  observaciones: string;
+  fecha_visita: string;
+}
+
 export default function App() {
   const [servicios, setServicios] = useState<Servicio[]>([]);
+  const [fichas, setFichas] = useState<FichaTecnica[]>([]);
   
   // Estados para autenticación
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -43,6 +54,25 @@ export default function App() {
       })
       .catch((err) => console.error('Error al cargar servicios:', err));
   }, []);
+
+  // Fetch de fichas técnicas cuando hay usuario logueado
+  useEffect(() => {
+    if (user) {
+      const token = localStorage.getItem('capilar_token');
+      fetch('http://localhost:1337/api/ficha-tecnicas?populate=*', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.data) {
+            setFichas(data.data);
+          }
+        })
+        .catch((err) => console.error('Error al cargar fichas técnicas:', err));
+    } else {
+      setFichas([]);
+    }
+  }, [user]);
 
   // Manejador del Login hacia Strapi
   const handleLogin = async (e: React.FormEvent) => {
@@ -82,6 +112,7 @@ export default function App() {
     localStorage.removeItem('capilar_token');
     localStorage.removeItem('capilar_user');
     setUser(null);
+    setFichas([]);
   };
 
   return (
@@ -101,6 +132,11 @@ export default function App() {
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 tracking-wider">
             <a href="#inicio" className="hover:text-slate-900 transition-colors uppercase">Inicio</a>
             <a href="#servicios" className="hover:text-slate-900 transition-colors uppercase">Servicios</a>
+            {user && (
+              <a href="#ficha-tecnica" className="text-[#A35FDA] font-semibold hover:text-[#8338ec] transition-colors uppercase">
+                Mi historial
+              </a>
+            )}
             <a href="#nosotros" className="hover:text-slate-900 transition-colors uppercase">Nosotros</a>
             <a href="#contacto" className="hover:text-slate-900 transition-colors uppercase">Contacto</a>
           </nav>
@@ -151,6 +187,75 @@ export default function App() {
         </div>
       </section>
 
+      {/* SECCIÓN FICHA TÉCNICA (SOLO VISIBLE SI EL USUARIO ESTÁ LOGUEADO) */}
+      {user && (
+        <section id="ficha-tecnica" className="py-16 px-4 max-w-7xl mx-auto w-full border-b border-slate-200">
+          <div className="text-center mb-10">
+            <span className="text-xs font-bold tracking-widest text-[#A35FDA] uppercase mb-2 block">
+              Área Personalizada
+            </span>
+            <h2 className="text-3xl font-bold text-slate-900">Historial de visitas</h2>
+            <p className="text-slate-500 mt-2 text-sm">Diagnóstico profesional registrado en CapiLAR para {user.username}</p>
+          </div>
+
+          {fichas.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {fichas.map((ficha) => (
+                <div
+                  key={ficha.id}
+                  className="bg-white border-2 border-purple-100 rounded-2xl p-6 shadow-sm relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 bg-gradient-to-l from-[#A35FDA] to-[#F98D56] text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">
+                    Visita: {ficha.fecha_visita || 'Reciente'}
+                  </div>
+
+                  <div className="mb-4">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Diagnóstico Capilar
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900">{ficha.diagnostico}</h3>
+                  </div>
+
+                  <div className="space-y-3 text-xs text-slate-600 border-t border-slate-100 pt-4">
+                    <div>
+                      <strong className="text-slate-700 block uppercase tracking-wide text-[10px] mb-0.5">
+                        Tipo de Cuero Cabelludo:
+                      </strong>
+                      <span className="bg-slate-100 text-slate-800 px-2.5 py-1 rounded-md inline-block font-medium">
+                        {ficha.tipo_cuero_cabelludo || 'Normal'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <strong className="text-slate-700 block uppercase tracking-wide text-[10px] mb-0.5">
+                        Historial Químico Previo:
+                      </strong>
+                      <p className="text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                        {ficha.historial_quimico || 'Sin antecedentes informados.'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <strong className="text-slate-700 block uppercase tracking-wide text-[10px] mb-0.5">
+                        Observaciones del Estilista:
+                      </strong>
+                      <p className="text-slate-600 bg-purple-50/50 p-2.5 rounded-lg border border-purple-100">
+                        {ficha.observaciones}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center max-w-md mx-auto">
+              <p className="text-slate-600 text-sm">No tenés fichas técnicas registradas todavía.</p>
+              <span className="text-xs text-slate-400 mt-1 block">Acercate a CapiLAR para tu primer diagnóstico capilar.</span>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* SECCIÓN SERVICIOS */}
       <section id="servicios" className="py-20 px-4 max-w-7xl mx-auto w-full">
         <div className="text-center mb-16">
@@ -168,7 +273,6 @@ export default function App() {
               className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"
             >
               <div>
-                {/* BADGE Y TIEMPO VISIBLE */}
                 <div className="flex justify-between items-center text-xs text-slate-500 mb-4">
                   <span className="bg-purple-50 text-[#A35FDA] font-semibold px-3 py-1 rounded-full uppercase tracking-wider text-[11px]">
                     {s.tipo || 'Tratamiento'}
