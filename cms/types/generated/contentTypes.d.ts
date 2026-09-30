@@ -443,6 +443,43 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiFichaTecnicaFichaTecnica
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'ficha_tecnicas';
+  info: {
+    displayName: 'Ficha-Tecnica';
+    pluralName: 'ficha-tecnicas';
+    singularName: 'ficha-tecnica';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    diagnostico: Schema.Attribute.String;
+    fecha_visita: Schema.Attribute.Date;
+    historial_quimico: Schema.Attribute.Text;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ficha-tecnica.ficha-tecnica'
+    > &
+      Schema.Attribute.Private;
+    observaciones: Schema.Attribute.Text;
+    publishedAt: Schema.Attribute.DateTime;
+    tipo_cuero_cabelludo: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
 export interface ApiServicioServicio extends Struct.CollectionTypeSchema {
   collectionName: 'servicios';
   info: {
@@ -929,7 +966,6 @@ export interface PluginUsersPermissionsUser
   };
   options: {
     draftAndPublish: false;
-    timestamps: true;
   };
   attributes: {
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
@@ -943,6 +979,10 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    ficha_tecnicas: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ficha-tecnica.ficha-tecnica'
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -984,6 +1024,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::ficha-tecnica.ficha-tecnica': ApiFichaTecnicaFichaTecnica;
       'api::servicio.servicio': ApiServicioServicio;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
