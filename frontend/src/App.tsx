@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 interface Servicio {
   id: number;
   documentId?: string;
-  nombre: string;
-  descripcion: string;
+  nombre?: string;
+  descripcion?: string;
   precio: number;
   tiempo_duracion?: number;
   tipo: string;
@@ -23,6 +23,11 @@ interface FichaTecnica {
 export default function App() {
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [fichas, setFichas] = useState<FichaTecnica[]>([]);
+
+  // Estados para catálogo interactivo
+  const [busqueda, setBusqueda] = useState('');
+  const [servicioParaReservar, setServicioParaReservar] = useState<Servicio | null>(null);
+  const [reservaConfirmada, setReservaConfirmada] = useState(false);
   
   // Estados para autenticación
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -114,6 +119,14 @@ export default function App() {
     setUser(null);
     setFichas([]);
   };
+
+  // Filtrado reactivo en tiempo real
+  const serviciosFiltrados = servicios.filter((s) => {
+    const titulo = (s.nombre || s.tipo || '').toLowerCase();
+    const desc = (s.descripcion || '').toLowerCase();
+    const query = busqueda.toLowerCase().trim();
+    return titulo.includes(query) || desc.includes(query);
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
@@ -256,50 +269,89 @@ export default function App() {
         </section>
       )}
 
-      {/* SECCIÓN SERVICIOS */}
+      {/* SECCIÓN SERVICIOS / CATÁLOGO INTERACTIVO */}
       <section id="servicios" className="py-20 px-4 max-w-7xl mx-auto w-full">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10">
           <span className="text-xs font-bold tracking-widest text-[#A35FDA] uppercase mb-2 block">
             Catálogo Capilar
           </span>
           <h2 className="text-3xl font-bold text-slate-900">Nuestros Servicios</h2>
-          <p className="text-slate-500 mt-2 text-sm">Datos sincronizados en tiempo real desde Strapi CMS</p>
+          <p className="text-slate-500 mt-2 text-sm">Explorá y reservá tus tratamientos en tiempo real</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {servicios.map((s) => (
-            <div
-              key={s.id}
-              className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"
-            >
-              <div>
-                <div className="flex justify-between items-center text-xs text-slate-500 mb-4">
-                  <span className="bg-purple-50 text-[#A35FDA] font-semibold px-3 py-1 rounded-full uppercase tracking-wider text-[11px]">
-                    {s.tipo || 'Tratamiento'}
-                  </span>
-                  <span className="text-slate-400 font-medium text-xs">
-                    {s.tiempo_duracion} min
-                  </span>
-                </div>
-
-                <h3 className="text-xl font-bold text-slate-900 mb-2">{s.nombre}</h3>
-                <p className="text-sm text-slate-500 line-clamp-3 mb-6">
-                  {s.descripcion || 'Servicio profesional realizado por estilistas especializados de CapiLAR.'}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                <div>
-                  <span className="text-xs text-slate-400 block font-medium">Arancel</span>
-                  <span className="text-2xl font-bold text-slate-900">${s.precio?.toLocaleString('es-AR')}</span>
-                </div>
-                <button className="px-5 py-2.5 bg-gradient-to-r from-[#A35FDA] to-[#F98D56] text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-all uppercase tracking-wider">
-                  Reservar
-                </button>
-              </div>
-            </div>
-          ))}
+        {/* BARRA DE BÚSQUEDA */}
+        <div className="max-w-md mx-auto mb-12">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar servicio (ej. balayage, corte, keratina)..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full px-5 py-3 text-sm bg-white border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#A35FDA] pr-10"
+            />
+            {busqueda && (
+              <button
+                onClick={() => setBusqueda('')}
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* GRILLA DE SERVICIOS */}
+        {serviciosFiltrados.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {serviciosFiltrados.map((s) => {
+              const tituloServicio = s.nombre || s.tipo || 'Servicio CapiLAR';
+              return (
+                <div
+                  key={s.id}
+                  className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"
+                >
+                  <div>
+                    <div className="flex justify-between items-center text-xs text-slate-500 mb-4">
+                      <span className="bg-purple-50 text-[#A35FDA] font-semibold px-3 py-1 rounded-full uppercase tracking-wider text-[11px]">
+                        Especialidad
+                      </span>
+                      {s.tiempo_duracion ? (
+                        <span className="text-slate-400 font-medium text-xs">
+                          {s.tiempo_duracion} min
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">{tituloServicio}</h3>
+                    <p className="text-sm text-slate-500 line-clamp-3 mb-6">
+                      {s.descripcion || 'Servicio profesional realizado por estilistas especializados de CapiLAR.'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div>
+                      <span className="text-xs text-slate-400 block font-medium">Arancel</span>
+                      <span className="text-2xl font-bold text-slate-900">${s.precio?.toLocaleString('es-AR')}</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setServicioParaReservar(s);
+                        setReservaConfirmada(false);
+                      }}
+                      className="px-5 py-2.5 bg-gradient-to-r from-[#A35FDA] to-[#F98D56] text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-all uppercase tracking-wider cursor-pointer"
+                    >
+                      Reservar
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 max-w-md mx-auto">
+            <p className="text-slate-500 text-sm">No encontramos ningún servicio que coincida con tu búsqueda.</p>
+          </div>
+        )}
 
         <div className="mt-16 border border-[#A35FDA] bg-[#A35FDA]/10 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
@@ -311,6 +363,72 @@ export default function App() {
           </button>
         </div>
       </section>
+
+      {/* MODAL DE RESERVA DE SERVICIO */}
+      {servicioParaReservar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative border border-slate-100">
+            <button
+              onClick={() => setServicioParaReservar(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-lg p-1 cursor-pointer"
+            >
+              ✕
+            </button>
+
+            {!reservaConfirmada ? (
+              <>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#A35FDA] block mb-1">
+                  Confirmación de Reserva
+                </span>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                  {servicioParaReservar.nombre || servicioParaReservar.tipo}
+                </h3>
+                <p className="text-xs text-slate-500 mb-6">
+                  Duración estimada: {servicioParaReservar.tiempo_duracion || 60} minutos
+                </p>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2 mb-6 text-sm">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Cliente:</span>
+                    <strong className="text-slate-800">{user ? user.username : 'Invitado'}</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Modalidad:</span>
+                    <span>Atención en salón</span>
+                  </div>
+                  <div className="flex justify-between text-slate-900 font-bold pt-2 border-t border-slate-200">
+                    <span>Total a abonar:</span>
+                    <span className="text-[#A35FDA] text-base">${servicioParaReservar.precio?.toLocaleString('es-AR')}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setReservaConfirmada(true)}
+                  className="w-full py-3 bg-gradient-to-r from-[#A35FDA] to-[#F98D56] text-white font-semibold rounded-lg shadow-sm hover:opacity-95 transition-all text-sm uppercase tracking-wider cursor-pointer"
+                >
+                  Confirmar Turno
+                </button>
+              </>
+            ) : (
+              <div className="text-center py-4">
+                <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl mx-auto mb-3 font-bold">
+                  ✓
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">¡Turno Confirmado!</h3>
+                <p className="text-xs text-slate-500 mb-6">
+                  Tu reserva para {servicioParaReservar.nombre || servicioParaReservar.tipo} fue agendada en CapiLAR.
+                </p>
+                <button
+                  onClick={() => setServicioParaReservar(null)}
+                  className="w-full py-2.5 bg-slate-900 text-white rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer"
+                >
+                  Entendido
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* MODAL DE LOGIN */}
       {isLoginOpen && (
